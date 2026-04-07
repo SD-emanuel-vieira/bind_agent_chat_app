@@ -5,10 +5,12 @@ env:
   - name: DATABRICKS_SERVING_ENDPOINT
     valueFrom: serving-endpoint
   - name: PGHOST
-    value: "https://dbc-56f60291-144c.cloud.databricks.com/"
+    value: "ep-misty-brook-d2uc1pj9.database.us-east-1.cloud.databricks.com"
   - name: PGDATABASE
-    value: "bind-agent-chat-project.bind_agent_chat"
+    value: "bind_agent_chat"
   - name: PGPORT
-    value: "443"
+    value: "5432"
   - name: PGUSER
     value: "84218446-d96f-450a-80a8-37b4affb4304"
+  - name: PGSSLMODE
+    value: "require"
