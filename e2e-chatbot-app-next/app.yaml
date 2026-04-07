@@ -4,3 +4,11 @@ runtime: nodejs20
 env:
   - name: DATABRICKS_SERVING_ENDPOINT
     valueFrom: serving-endpoint
+  - name: PGHOST
+    value: "https://dbc-56f60291-144c.cloud.databricks.com/"
+  - name: PGDATABASE
+    value: "bind-agent-chat-project.bind_agent_chat"
+  - name: PGPORT
+    value: "443"
+  - name: PGUSER
+    value: "84218446-d96f-450a-80a8-37b4affb4304"
