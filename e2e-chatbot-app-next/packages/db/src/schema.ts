@@ -51,3 +51,15 @@ export const message = createTable('Message', {
 });
 
 export type DBMessage = InferSelectModel<typeof message>;
+
+export const vote = createTable('Vote', {
+  chatId: uuid('chatId')
+    .notNull()
+    .references(() => chat.id),
+  messageId: uuid('messageId')
+    .notNull()
+    .references(() => message.id),
+  isUpvoted: varchar('isUpvoted', { enum: ['up', 'down'] }).notNull(),
+});
+
+export type Vote = InferSelectModel<typeof vote>;

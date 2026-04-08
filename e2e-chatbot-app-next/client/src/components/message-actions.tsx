@@ -1,12 +1,14 @@
 import { useCopyToClipboard } from 'usehooks-ts';
 
 import { Actions, Action } from './elements/actions';
-import { memo } from 'react';
+import { memo, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import type { ChatMessage } from '@chat-template/core';
-import { ChevronDown, ChevronUp, CopyIcon, PencilLineIcon } from 'lucide-react';
+import { ChevronDown, ChevronUp, CopyIcon, PencilLineIcon, ThumbsUpIcon, ThumbsDownIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 function PureMessageActions({
+  chatId,
   message,
   isLoading,
   setMode,
@@ -14,6 +16,7 @@ function PureMessageActions({
   showErrors = false,
   onToggleErrors,
 }: {
+  chatId: string;
   message: ChatMessage;
   isLoading: boolean;
   setMode?: (mode: 'view' | 'edit') => void;
@@ -22,6 +25,31 @@ function PureMessageActions({
   onToggleErrors?: () => void;
 }) {
   const [_, copyToClipboard] = useCopyToClipboard();
+  const [voteState, setVoteState] = useState<'up' | 'down' | null>(null);
+
+  const handleVote = useCallback(async (type: 'up' | 'down') => {
+    // Toggle off if clicking the same vote
+    const newVote = voteState === type ? null : type;
+    setVoteState(newVote);
+
+    if (!newVote) return; // If toggling off, no need to persist (could add delete endpoint later)
+
+    try {
+      const response = await fetch('/api/vote', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chatId, messageId: message.id, type }),
+      });
+
+      if (!response.ok) {
+        setVoteState(voteState); // revert
+        toast.error('Failed to save feedback');
+      }
+    } catch {
+      setVoteState(voteState); // revert
+      toast.error('Failed to save feedback');
+    }
+  }, [chatId, message.id, voteState]);
 
   if (isLoading) return null;
 
@@ -71,6 +99,20 @@ function PureMessageActions({
           <CopyIcon />
         </Action>
       )}
+      <Action
+        tooltip="Good response"
+        onClick={() => handleVote('up')}
+        className={cn(voteState === 'up' && 'text-green-600 dark:text-green-400')}
+      >
+        <ThumbsUpIcon />
+      </Action>
+      <Action
+        tooltip="Bad response"
+        onClick={() => handleVote('down')}
+        className={cn(voteState === 'down' && 'text-red-600 dark:text-red-400')}
+      >
+        <ThumbsDownIcon />
+      </Action>
       {errorCount > 0 && onToggleErrors && (
         <Action
           tooltip={showErrors ? 'Hide errors' : 'Show errors'}

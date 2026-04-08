@@ -40,6 +40,7 @@ import { Streamdown } from 'streamdown';
 import { useApproval } from '@/hooks/use-approval';
 
 const PurePreviewMessage = ({
+  chatId,
   message,
   allMessages,
   isLoading,
@@ -367,6 +368,7 @@ const PurePreviewMessage = ({
           {!isReadonly && !hasOnlyErrors && (
             <MessageActions
               key={`action-${message.id}`}
+              chatId={chatId}
               message={message}
               isLoading={isLoading}
               setMode={setMode}

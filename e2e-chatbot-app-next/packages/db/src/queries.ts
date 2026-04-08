@@ -13,7 +13,7 @@ import {
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
-import { chat, message, type DBMessage, type Chat } from './schema';
+import { chat, message, vote, type DBMessage, type Chat, type Vote } from './schema';
 import type { VisibilityType } from '@chat-template/utils';
 import { ChatSDKError } from '@chat-template/core/errors';
 import type { LanguageModelV3Usage } from '@ai-sdk/provider';
@@ -414,5 +414,61 @@ export async function updateChatLastContextById({
   } catch (error) {
     console.warn('Failed to update lastContext for chat', chatId, error);
     return;
+  }
+}
+
+export async function getVotesByChatId({ id }: { id: string }) {
+  if (!isDatabaseAvailable()) {
+    console.log('[getVotesByChatId] Database not available, returning empty');
+    return [];
+  }
+
+  try {
+    return await (await ensureDb())
+      .select()
+      .from(vote)
+      .where(eq(vote.chatId, id));
+  } catch (_error) {
+    throw new ChatSDKError(
+      'bad_request:database',
+      'Failed to get votes by chat id',
+    );
+  }
+}
+
+export async function voteMessage({
+  chatId,
+  messageId,
+  type,
+}: {
+  chatId: string;
+  messageId: string;
+  type: 'up' | 'down';
+}) {
+  if (!isDatabaseAvailable()) {
+    console.log('[voteMessage] Database not available, skipping');
+    return;
+  }
+
+  try {
+    const [existingVote] = await (await ensureDb())
+      .select()
+      .from(vote)
+      .where(and(eq(vote.messageId, messageId)));
+
+    if (existingVote) {
+      return await (await ensureDb())
+        .update(vote)
+        .set({ isUpvoted: type })
+        .where(and(eq(vote.messageId, messageId), eq(vote.chatId, chatId)));
+    }
+
+    return await (await ensureDb()).insert(vote).values({
+      chatId,
+      messageId,
+      isUpvoted: type,
+    });
+  } catch (_error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to vote message');
   }
 }
